@@ -55,7 +55,10 @@ class ImageRequest {
                     };
                 }
             }
-
+            const { queryStringParameters } = event;
+            if (queryStringParameters && queryStringParameters.d) {
+              event.path = '/fit-in/'+queryStringParameters.d +'/'+ event.path;
+            }
             this.requestType = this.parseRequestType(event);
             this.bucket = this.parseImageBucket(event, this.requestType);
             this.key = this.parseImageKey(event, this.requestType);
@@ -87,7 +90,7 @@ class ImageRequest {
                     this.outputFormat = outputFormat;
                 }
             }
-            
+
             // Fix quality for Thumbor and Custom request type if outputFormat is different from quality type.
             if (this.outputFormat) {
                 const requestType = ['Custom', 'Thumbor'];
@@ -294,7 +297,7 @@ class ImageRequest {
         } catch(error) {
             console.error(error);
             isBase64Encoded = false;
-        } 
+        }
 
         if (matchDefault.test(path) && isBase64Encoded) {  // use sharp
             return 'Default';
@@ -411,7 +414,7 @@ class ImageRequest {
             status: 500,
             code: 'RequestTypeError',
             message: 'The file does not have an extension and the file type could not be inferred. Please ensure that your original image is of a supported file type (jpg, png, tiff, webp, svg). Refer to the documentation for additional guidance on forming image requests.'
-        };   
+        };
     }
 }
 }
