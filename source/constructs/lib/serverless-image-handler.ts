@@ -90,7 +90,7 @@ export class ServerlessImageHandler extends Construct {
         )
       });
       isOptInRegion.overrideLogicalId('IsOptInRegion');
-      
+
       const isNotOptInRegion = new cdk.CfnCondition(this, 'IsNotOptInRegion', {
         expression: cdk.Fn.conditionNot(isOptInRegion)
       });
@@ -291,28 +291,28 @@ export class ServerlessImageHandler extends Construct {
 
       //OptInRegionLogBucket
       const optInRegionAccessLogBucket = cdkS3.Bucket.fromBucketAttributes(this, 'CloudFrontLoggingBucket', {
-        bucketName: 
+        bucketName:
           cdk.Fn.getAtt(
-            cdk.Lazy.stringValue({ 
+            cdk.Lazy.stringValue({
               produce(context) {
                 return cfLoggingBucket.logicalId}
-            }), 
+            }),
           'bucketName').toString(),
          region: 'us-east-1'
       });
-      
+
       //OptInRegionLogBucketPolicy
       const optInRegionPolicyStatement = cfnAccessLogBucketPolicy.policyDocument.toJSON().Statement[0];
       optInRegionPolicyStatement.Resource = "";
 
       //Choose Log Bucket
       const cloudFrontLogsBucket = cdk.Fn.conditionIf(isOptInRegion.logicalId, optInRegionAccessLogBucket.bucketRegionalDomainName, accessLogBucket.bucketRegionalDomainName).toString();
-      
-      
+
+
       //ImagehandlerCachePolicy
       const cfnCachePolicy = new cdkCloudFront.CfnCachePolicy(
-        this, 
-        'CachePolicy', 
+        this,
+        'CachePolicy',
         {
           cachePolicyConfig: {
             name: `${cdk.Aws.STACK_NAME}-${cdk.Aws.REGION}-ImageHandlerCachePolicy`,
@@ -323,24 +323,24 @@ export class ServerlessImageHandler extends Construct {
               cookiesConfig: {cookieBehavior: "none"},
               enableAcceptEncodingGzip: true,
               headersConfig: {
-                headerBehavior: "whitelist", 
+                headerBehavior: "whitelist",
                 headers:['origin', 'accept']
               },
               queryStringsConfig: {
                 queryStringBehavior: "whitelist",
-                queryStrings: ["signature"]
+                queryStrings: ["signature","d"]
               },
-            }       
+            }
         }
       });
       cfnCachePolicy.overrideLogicalId("ImageHandlerCachePolicy");
 
       //ImageHandlerOriginRequestPolicy
       const cfnOriginRequestPolicy = new cdkCloudFront.CfnOriginRequestPolicy(
-        this, 
+        this,
         "OriginRequestPolicy",
         {
-          originRequestPolicyConfig: { 
+          originRequestPolicyConfig: {
             cookiesConfig: {cookieBehavior: "none"},
             headersConfig: {
               headerBehavior: "whitelist",
@@ -349,12 +349,12 @@ export class ServerlessImageHandler extends Construct {
             name: `${cdk.Aws.STACK_NAME}-${cdk.Aws.REGION}-ImageHandlerOriginRequestPolicy`,
             queryStringsConfig: {
               queryStringBehavior: "whitelist",
-              queryStrings: ["signature"]
+              queryStrings: ["signature","d"]
             },
           }
         });
         cfnOriginRequestPolicy.overrideLogicalId("ImageHandlerOriginRequestPolicy");
- 
+
       // ImageHandlerDistribution
       const cfnCloudFrontDistribution = cloudFrontWebDistribution.node.defaultChild as cdkCloudFront.CfnDistribution;
       cfnCloudFrontDistribution.distributionConfig = {
